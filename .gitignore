@@ -23,6 +23,11 @@
 # misc
 .DS_Store
 *.pem
+.reos_encryption_key
+__pycache__/
+*.py[cod]
+*.db
+/backups/
 
 # debug
 npm-debug.log*

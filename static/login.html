@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | REOS</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101113;
+      --panel: #181a1d;
+      --line: #2a2d32;
+      --text: #f4f0ea;
+      --muted: #9a9590;
+      --accent: #e8a838;
+      --accent-dark: #c78a20;
+      --danger: #e85555;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #101113;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .login-panel {
+      width: min(100%, 420px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+    }
+
+    .brand {
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      color: var(--accent);
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      font-size: 13px;
+    }
+
+    h1 {
+      margin: 8px 0 0;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #111316;
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232, 168, 56, 0.15);
+    }
+
+    .error {
+      margin: 0 0 14px;
+      padding: 10px 12px;
+      border: 1px solid rgba(232, 85, 85, 0.35);
+      border-radius: var(--radius);
+      color: #ffd3d3;
+      background: rgba(232, 85, 85, 0.12);
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #000;
+      font: 800 14px/1 inherit;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    .hint {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="login-panel">
+    <div class="brand">
+      <div class="brand-mark">REOS</div>
+      <h1>Sign in to CRM</h1>
+    </div>
+
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+
+    <p class="hint">Set REOS_ADMIN_USER and REOS_ADMIN_PASSWORD before first startup.</p>
+  </main>
+</body>
+</html>

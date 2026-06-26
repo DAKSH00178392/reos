@@ -1,34 +1,83 @@
-# REOS - Real Estate Operating System
+# REOS
 
-This is the primary app for the `tpcrm` workspace.
+Real Estate Operating System is a Flask-based CRM for real-estate teams managing leads, clients, properties, meetings, follow-ups, shortlists, brokers, archives, and operational backups.
 
-A professional, intelligent Real Estate CRM mapped to a Flask backend with an SQLite database.
+## Features
 
-## Prerequisites
-- Python 3.x
-- pip
+- Lead, client, property, broker, meeting, and follow-up management
+- Property matching and client shortlisting workflows
+- Pipeline, dashboard, analytics, archive, and backup screens
+- Region, city, creator, and assignment filters
+- Login-protected CRM UI and REST APIs
+- Hashed passwords, CSRF protection, login throttling, audit logs, and soft archive
+- Optional encryption for sensitive CRM fields
+- Admin-only exports and backup/restore tools
+- Optional OpenAI-powered assistant when `OPENAI_API_KEY` is configured
 
-## Installation & Running
+## Tech Stack
+
+- Python
+- Flask
+- SQLite
+- HTML, CSS, and vanilla JavaScript
+- Gunicorn-compatible WSGI entrypoint
+
+## Repository Safety
+
+This repository is intended to contain application source code only.
+
+The following runtime data is ignored and should not be committed:
+
+- `reos.db`
+- `.reos_encryption_key`
+- `backups/`
+- `__pycache__/`
+- `.env`
+
+Anyone with both the database and encryption key can read CRM data through the app, so keep those files private and backed up securely.
+
+## Quick Start
 
 Install dependencies:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-Run locally on your PC:
-```bash
-set REOS_ADMIN_PASSWORD=choose-a-strong-password
+Start locally on Windows PowerShell:
+
+```powershell
+$env:REOS_ADMIN_PASSWORD="choose-a-strong-password"
 python app.py
 ```
-Then open [http://localhost:5000/login](http://localhost:5000/login) in your browser.
 
-On first startup, the app creates the initial admin user from `REOS_ADMIN_USER` or `admin` and requires `REOS_ADMIN_PASSWORD`.
+Open:
 
-## Web Server Settings
+```text
+http://localhost:5000/login
+```
 
-For office network access, set `REOS_HOST=0.0.0.0` and open the main PC/server IP from other computers.
+On first startup, REOS creates the initial admin user from:
 
-For production hosting:
+- `REOS_ADMIN_USER`, default `admin`
+- `REOS_ADMIN_PASSWORD`, required
+
+## Configuration
+
+Use `env.example` as the reference for environment variables.
+
+Common local settings:
+
+```powershell
+$env:REOS_HOST="127.0.0.1"
+$env:REOS_PORT="5000"
+$env:REOS_DEBUG="0"
+$env:REOS_ADMIN_PASSWORD="choose-a-strong-password"
+python app.py
+```
+
+Production-style settings:
+
 ```bash
 export REOS_SECRET_KEY="a-long-random-secret"
 export REOS_ENCRYPTION_KEY="a-fernet-encryption-key"
@@ -40,17 +89,18 @@ export REOS_ALLOWED_HOSTS="crm.yourcompany.com"
 gunicorn -w 2 -b 127.0.0.1:5000 wsgi:app
 ```
 
-On Windows PowerShell for local testing:
-```powershell
-$env:REOS_HOST="127.0.0.1"
-$env:REOS_PORT="5000"
-$env:REOS_DEBUG="0"
-python app.py
+Generate an encryption key:
+
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 ```
 
-## Users
+Keep `REOS_ENCRYPTION_KEY` private. If it is lost, encrypted CRM data cannot be recovered.
 
-Create staff logins from the command line:
+## User Management
+
+Manage staff logins from the command line:
+
 ```bash
 python manage_users.py add staff1
 python manage_users.py list
@@ -60,94 +110,70 @@ python manage_users.py delete staff1
 
 Users can also change their own password from the sidebar after logging in.
 
-## Data Encryption
+## Data Protection
 
-Sensitive CRM fields are encrypted before they are stored in SQLite, then decrypted only when the logged-in app reads them.
+Sensitive CRM fields can be encrypted before storage in SQLite, including:
 
-Generate a production encryption key:
-```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-```
+- Client names, phone numbers, email, and notes
+- Owner and broker contact details
+- Follow-up and meeting notes
+- Activity messages
 
-Set that value as `REOS_ENCRYPTION_KEY` before starting the app. Keep it private and backed up. If this key is lost, encrypted CRM data cannot be recovered.
+Encrypt existing plaintext records after setting `REOS_ENCRYPTION_KEY`:
 
-Encrypt existing plaintext records after setting the key:
 ```bash
 python manage_encryption.py
 ```
 
-Sensitive encrypted fields include client names, phone numbers, email, notes, owner/broker contact details, follow-up notes, meeting notes, and activity messages.
+Delete actions use soft archive by setting `deletedAt` and `deletedBy`; normal screens and exports hide archived records.
 
-## Security Controls
+Restore archived records:
 
-The app includes:
-- Login-required protection for every CRM page and API.
-- Hashed passwords.
-- Login attempt throttling.
-- CSRF protection for forms and API writes.
-- Soft archive instead of permanent delete for CRM records.
-- Audit log entries for create, update, and archive actions.
-- Admin-only CSV/XLSX exports for decrypted CRM data.
-- Same-origin API behavior by default; CORS is disabled unless `REOS_CORS_ORIGINS` is set.
-- Security headers for frame, content-type, referrer, and browser permission restrictions.
-- Optional HTTPS-only cookies and HSTS for production.
-- Request body size limit via `REOS_MAX_CONTENT_LENGTH`.
-- Optional host allow-list via `REOS_ALLOWED_HOSTS`.
-
-Before hosting, set a strong `REOS_SECRET_KEY`, change all default passwords, keep `REOS_DEBUG=0`, and run behind HTTPS.
-
-## Data Safety
-
-Delete buttons archive records by setting `deletedAt` and `deletedBy`; normal screens and exports hide archived records. This prevents accidental data loss while keeping old rows recoverable from the database.
-
-Global admins can create a downloadable backup from the web app: open **Backups** in the sidebar, then click **Create Backup**. The app also creates one automatic backup per day while the system is in use. Backup ZIP files are stored in `reos/backups/` and include both:
-- `reos.db`
-- `.reos_encryption_key`
-
-Keep backup ZIP files private. Anyone with both the database and encryption key can read CRM data through the app.
-
-For database migration, open **Backups** as the global admin and use **Upload DB**. Upload accepts a REOS backup `.zip` or a SQLite `.db` file. The app validates the database and creates a safety backup before replacing the current database.
-
-Properties that are linked to meetings, shortlists, or closed deals are protected from archive through the property delete button. Clients with active leads are also protected.
-
-Audit rows are stored in `audit_logs` and can be read by admins through `/api/audit`.
-
-List archived clients from PowerShell:
 ```powershell
 python manage_archive.py list clients
-```
-
-Restore one archived client:
-```powershell
 python manage_archive.py restore clients 8
 ```
 
-Admins can also restore from the web app: open **Archive** in the sidebar, choose the record type, then click **Restore**.
-Restoring a client also restores archived leads that match by client ID, phone number, or client name.
+## Backups
 
-The web API restore route is `POST /api/clients/<id>/restore`.
+Global admins can create downloadable backups from the web app in the **Backups** screen. Automatic daily backups are also supported while the app is in use.
 
-Client archive is blocked when an active lead still matches by client ID, phone number, or client name.
-Lead archive also archives the matching client when that client has no other active leads. If the client has another active lead, only the selected lead is archived.
+Backup ZIP files are stored in `backups/` and include:
 
-## Region Filters
+- `reos.db`
+- `.reos_encryption_key`
 
-Leads, clients, and properties support region/city/creator filters in the web UI. New records store:
-- `region`
-- `createdBy`
+Keep backup ZIP files private.
 
-Regions are auto-derived from location for common nearby areas, for example Ahmedabad/Sanand/Gandhinagar as `Ahmedabad Region` and Vapi/Daman/Silvassa/Valsad as `Vapi Region`. Older records still appear in filters using derived region/city from their saved location, but their creator may show as `Unknown` if the record was created before `createdBy` tracking existed.
+## Project Structure
 
-Entry forms include a Region dropdown. Default regions are Ahmedabad Region, Vapi Region, Surat Region, Shared, and Other. Users can press the `+` button beside the Region field to add a new shared region to the dropdown list.
+```text
+app.py                  Flask app, routes, APIs, auth, exports, backups
+database.py             SQLite connection helpers and schema setup
+crypto_utils.py         Sensitive-field encryption helpers
+static/REOS.html        Main CRM interface
+static/login.html       Login page
+static/change_password.html
+manage_users.py         CLI user management
+manage_encryption.py    CLI encryption migration
+manage_archive.py       CLI archive tools
+wsgi.py                 Production WSGI entrypoint
+env.example             Environment variable reference
+```
 
-## Workspace Note
+## Security Checklist
 
-Ongoing work should happen in `reos/`. Older prototype files were moved under the workspace archive folder for reference.
+Before hosting:
 
-## Architecture
-- `app.py`: Flask application providing REST APIs for Leads, Clients, Properties, Followups, Meetings, and Brokers.
-- `database.py`: Handles all database connections and schema creation/query execution via SQLite.
-- `static/REOS.html`: The fully-featured UI that interacts with the `app.py` APIs using asynchronous fetch calls. It replaces the old prototype files.
-- `manage_users.py`: Command-line staff login management.
-- `manage_encryption.py`: Encrypts existing sensitive plaintext data.
-- `wsgi.py`: Production WSGI entrypoint for Gunicorn/Nginx hosting.
+- Set a strong `REOS_SECRET_KEY`
+- Set `REOS_ADMIN_PASSWORD`
+- Set and back up `REOS_ENCRYPTION_KEY`
+- Keep `REOS_DEBUG=0`
+- Use HTTPS
+- Enable secure cookies and HSTS
+- Restrict `REOS_ALLOWED_HOSTS`
+- Keep `reos.db`, backups, and encryption keys out of Git
+
+## License
+
+No open-source license has been added. All rights are reserved unless a license is added later.
